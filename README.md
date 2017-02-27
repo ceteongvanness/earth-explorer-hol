@@ -399,6 +399,198 @@ You can run the app in the android emulator by click on the green arrow with the
 
 ![Running the app in emulator](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/9e0e7df0-a1c2-4bfe-8c3a-6717251caa72/Capture.PNG)
 
+### EarthExplorer.iOS
 
+Right click on the **EarthExplorer.iOS** project and select **Set as StartUp Project**
+
+Right click on the main solution **EarthExplorer** project and select **Properties**
+
+Uncheck **Build** and **Deploy** for Android and select **Build** for EarthExplorer.iOS. 
+
+![Confguration properties](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/b0b9ddbc-e861-4e16-aa79-b392aff6368f/iOS%20configuration%20manager.png)
+
+Click **OK**
+
+In the Solution Explorer, open **Main.storyboard**
+
+Delete the **Hello World, Click Me!** button
+
+From the Toolbox, drag a **Map View** and **Table View** control onto the storyboard, and set their constraints
+
+![Storyboard](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/e0c86e42-aa4f-4f69-b5ce-0038199e5cb7/iOS%20storyboard.PNG)
+
+Set the name of the controls to **MyMap** and **MyTable** respectively in the **Properties** windows
+
+![Setting properties name](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/5460c5f5-6708-4eb0-857f-1ac1f5a0bcfd/iOS%20control%20names.png)
+
+#### Viewing controls from the document outline windows
+
+Go to **View** > **Other Windows** > **Document outline**
+
+Remove the nested **Table Cell** from the **Table View** until you see the following view:
+
+![Removing the table cell from the Table View](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/cccbd987-6f15-4dfc-b462-68a3899fb401/iOS%20document%20outline.PNG)
+
+#### Creating the TableSource class
+
+Right click on the **EarthExplorer.iOS** project > **Add** > **Add New Item** > **Class**
+
+Set the name as **TableSource.cs** and click **Add**
+
+![TableSource class](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/1308e04f-dc4b-4fdd-b2f5-b6b0fe2a51f1/iOS%20tablesource.png)
+
+#### TableSource.cs
+
+```csharp
+public class TableSource : UITableViewSource
+{
+    List<PointOfInterest> TableItems;
+    string CellIdentifier = "TableCell";
+    public event Action<PointOfInterest> OnClick;
+
+    public TableSource(List<PointOfInterest> items)
+    {
+        TableItems = items;
+    }
+
+    public override nint RowsInSection(UITableView tableview, nint section)
+    {
+        return TableItems.Count;
+    }
+
+    public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
+    {
+        OnClick?.Invoke(TableItems[indexPath.Row]);
+    }
+
+    public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
+    {
+        UITableViewCell cell = tableView.DequeueReusableCell(CellIdentifier);
+        PointOfInterest item = TableItems[indexPath.Row];
+
+        //---- if there are no cells to reuse, create a new one
+        if (cell == null)
+        {
+            cell = new UITableViewCell(UITableViewCellStyle.Default, CellIdentifier);
+        }
+
+        cell.TextLabel.Text = item.Name;
+        return cell;
+    }
+}
+```
+
+#### Open ViewController.cs
+
+Remove the code related to the Button control that was deleted and add the following snippet in the **ViewDidLoad** method
+
+Remember to mark the method as **async**
+
+```csharp
+public async override void ViewDidLoad ()
+{
+    base.ViewDidLoad ();
+    // Perform any additional setup after loading the view, typically from a nib.
+
+    var source = new TableSource(await PointOfInterest.GetGlobalListAsync());
+
+    source.OnClick += Source_OnClick;
+
+    MyTable.Source = source;
+    MyTable.ReloadData();
+}
+```
+
+#### Implementing the OnClick event handler
+
+```csharp
+private void Source_OnClick(PointOfInterest poi)
+{
+    CLLocationCoordinate2D coords = new CLLocationCoordinate2D(poi.Latitude, poi.Longitude);
+
+    MyMap.Region = new MapKit.MKCoordinateRegion(coords, new MapKit.MKCoordinateSpan(0.1, 0.1));
+}
+```
+
+Import the following namespace
+
+```csharp
+using CoreLocation;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using UIKit;
+````
+
+#### Implementing the Location manager
+
+Implemenet the LocationManager within **ViewDidLoad**. The method should now look like this
+
+```csharp
+public async override void ViewDidLoad ()
+{
+    base.ViewDidLoad ();
+    // Perform any additional setup after loading the view, typically from a nib.
+    LocationManager = new CLLocationManager();
+
+    LocationManager.RequestWhenInUseAuthorization();
+
+    LocationManager.DistanceFilter = CLLocationDistance.FilterNone;
+    LocationManager.DesiredAccuracy = 1000;
+    LocationManager.LocationsUpdated += LocationManager_LocationsUpdated;
+    LocationManager.StartUpdatingLocation();
+
+    PointOfInterest.GetCurrentPOIAsync = async () =>
+    {
+        await Task.Run(() => waitEvent.WaitOne());
+        return currentPOI;
+    };
+
+    var source = new TableSource(await PointOfInterest.GetGlobalListAsync());
+
+    source.OnClick += Source_OnClick;
+
+    MyTable.Source = source;
+    MyTable.ReloadData();
+}
+```
+
+Declare the following members at the class level
+```csharp
+CLLocationManager LocationManager;
+ManualResetEvent waitEvent = new ManualResetEvent(false);
+PointOfInterest currentPOI = new PointOfInterest();
+```
+
+#### Implement the LocationsUpdated event handler
+
+```csharp
+private void LocationManager_LocationsUpdated(object sender, CLLocationsUpdatedEventArgs e)
+{
+    LocationManager.StopUpdatingLocation();
+    currentPOI.Name = "Exactly here...";
+    currentPOI.Latitude = e.Locations[0].Coordinate.Latitude;
+    currentPOI.Longitude = e.Locations[0].Coordinate.Longitude;
+    waitEvent.Set();
+}
+```
+
+#### Modify the plist to allow locations to be used
+In the **Solution Explorer**, right click on **Info.plist** > **Open With** > **XML (Text) Editor**
+
+Add the following snippet right before ```</dict>```
+
+```xml
+  <key>NSLocationAlwaysUsageDescription</key>
+  <string>This will be called if location is used behind the scenes</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>You are about to use location!</string>
+</dict>
+</plist>
+
+```
+
+### Build and run the app
+![TableSource class](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/7018e48b-045e-4df3-933b-0d7ed43fcb9b/iOS%20run%20simulator.PNG)
 
 
