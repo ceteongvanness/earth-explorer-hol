@@ -8,9 +8,13 @@ Open **Visual Studio 2015**
 
 Go to **File** > **New** > **Project** 
 
-Navigate to **Visual C#** > **Cross-platform** and create **Blank App (Native Portable)** a project called **EarthExplorer**
+Navigate to **Visual C#** > **Cross-platform** and create **Cross Platform App (Xamarin)** a project called **EarthExplorer**
 
-![Visual Studio new project](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/45e876ca-ebd2-447f-94c4-e622f6eacc19/Capture.PNG)
+![Visual Studio new project](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/0774d4fc-f48b-477b-b471-07471950321c/new%20project.PNG)
+
+Select **Blank App**, **Native** for the UI Technology, and **Portable Class Library (PCL)** for the Code Sharing Strategy
+![Visual Studio new project](http://content.screencast.com/users/louisleong/folders/earthexplorer-hol/media/49dc5eea-3e42-4a2c-888d-95f2a5e21e3b/new%20project%20options.PNG)
+
 
 This solution contains 4 projects
 
