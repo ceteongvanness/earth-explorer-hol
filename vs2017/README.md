@@ -132,6 +132,10 @@ using System.Collections.Generic;
 ```
 
 10. Within the class, declare a list of PointOfInterest
+```csharp
+List<PointOfInterest> Datasource;
+```
+![Visual Studio blank solution](http://content.screencast.com/users/louisleong/folders/earthexplorer-2017/media/82f1101a-2e49-408f-a4aa-8d920eb94dbf/android-declare-datasource.png)
 
 11. Initialise, and wire up the list view such that your **OnCreate** method looks like this
 
