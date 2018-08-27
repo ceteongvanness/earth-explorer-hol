@@ -104,7 +104,7 @@ We're now going to implement the functionality for the Android app
 ![Visual Studio blank solution](http://content.screencast.com/users/louisleong/folders/earthexplorer-2017/media/2aa55c98-b7a1-4f88-a78b-e379b9996c8f/android-add-reference.png)
 
 3. Check **EarthExplorer.Core** and click **OK**
-![Visual Studio blank solution](http://www.screencast.com/users/louisleong/folders/earthexplorer-2017/media/8a98f65f-7422-4f1f-8543-3fcb697eb953)
+![Visual Studio blank solution](http://content.screencast.com/users/louisleong/folders/earthexplorer-2017/media/8a98f65f-7422-4f1f-8543-3fcb697eb953/android-add-core-reference.JPG)
 
 4. In the **solution explorer**, go to **EarthExplorer.Anroid** > **Resources** > **layout** and open **activity_main.axml**
 
@@ -296,40 +296,51 @@ You can run the app in the android emulator by click on the green arrow with the
 #### TableSource.cs
 
 ```csharp
-public class TableSource : UITableViewSource
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using EarthExplore.Core;
+using Foundation;
+using UIKit;
+
+namespace EarthExplore.iOS
 {
-    List<PointOfInterest> TableItems;
-    string CellIdentifier = "TableCell";
-    public event Action<PointOfInterest> OnClick;
-
-    public TableSource(List<PointOfInterest> items)
+    public class TableSource : UITableViewSource
     {
-        TableItems = items;
-    }
+        List<PointOfInterest> TableItems;
+        string CellIdentifier = "TableCell";
+        public event Action<PointOfInterest> OnClick;
 
-    public override nint RowsInSection(UITableView tableview, nint section)
-    {
-        return TableItems.Count;
-    }
-
-    public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
-    {
-        OnClick?.Invoke(TableItems[indexPath.Row]);
-    }
-
-    public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
-    {
-        UITableViewCell cell = tableView.DequeueReusableCell(CellIdentifier);
-        PointOfInterest item = TableItems[indexPath.Row];
-
-        //---- if there are no cells to reuse, create a new one
-        if (cell == null)
+        public TableSource(List<PointOfInterest> items)
         {
-            cell = new UITableViewCell(UITableViewCellStyle.Default, CellIdentifier);
+            TableItems = items;
         }
 
-        cell.TextLabel.Text = item.Name;
-        return cell;
+        public override nint RowsInSection(UITableView tableview, nint section)
+        {
+            return TableItems.Count;
+        }
+
+        public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
+        {
+            OnClick?.Invoke(TableItems[indexPath.Row]);
+        }
+
+        public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
+        {
+            UITableViewCell cell = tableView.DequeueReusableCell(CellIdentifier);
+            PointOfInterest item = TableItems[indexPath.Row];
+
+            //---- if there are no cells to reuse, create a new one
+            if (cell == null)
+            {
+                cell = new UITableViewCell(UITableViewCellStyle.Default, CellIdentifier);
+            }
+
+            cell.TextLabel.Text = item.Name;
+            return cell;
+        }
     }
 }
 ```
